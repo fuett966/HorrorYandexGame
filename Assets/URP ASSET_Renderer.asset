@@ -23,138 +23,6 @@ MonoBehaviour:
       normalBlend: 0
   m_CopyDepthPS: {fileID: 4800000, guid: d6dae50ee9e1bfa4db75f19f99355220, type: 3}
   m_DBufferClear: {fileID: 4800000, guid: f056d8bd2a1c7e44e9729144b4c70395, type: 3}
---- !u!114 &-6809367965929792747
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8fb609ae800d4ad4ea60345e8437077c, type: 3}
-  m_Name: Pixelation
-  m_EditorClassIdentifier: 
-  m_Active: 1
-  _event: 550
-  _pass: {fileID: -4920188821704047181}
-  _blitShader: {fileID: 4800000, guid: c17132b1f77d20942aa75f8429c0f8bc, type: 3}
---- !u!114 &-5436246308483700716
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8a163714fc2589b4c9e843f355ab0fae, type: 3}
-  m_Name: VhsFx
-  m_EditorClassIdentifier: 
-  m_Active: 1
-  _event: 600
-  _pass: {fileID: -4387757472080044610}
-  _blitShader: {fileID: 4800000, guid: c17132b1f77d20942aa75f8429c0f8bc, type: 3}
---- !u!114 &-4920188821704047181
-MonoBehaviour:
-  m_ObjectHideFlags: 3
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b1c2a0ff44a297c4083246f72b8baae5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _active: 1
-  _shader: {fileID: 4800000, guid: 2bf2830f83506eb4097cdebfd30a7bb8, type: 3}
-  _scaleLerp:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0.0049
-      inSlope: 0.0508
-      outSlope: 0.0508
-      tangentMode: 0
-      weightedMode: 3
-      inWeight: 0
-      outWeight: 0.742
-    - serializedVersion: 3
-      time: 1
-      value: 0.5095
-      inSlope: 3.6093
-      outSlope: 3.6093
-      tangentMode: 0
-      weightedMode: 3
-      inWeight: 0.1646
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  _gridReveal: 0.5
-  _gridDiscrete: 1
-  _crisp: 1
-  _roundnessDefault: 0.5
-  _palette:
-    enabled: 0
-    value: {fileID: 0}
---- !u!114 &-4387757472080044610
-MonoBehaviour:
-  m_ObjectHideFlags: 3
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f8dc78f503ce4704bc3b01f693783c94, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _active: 1
-  _shader: {fileID: 4800000, guid: 074eb04a5009453ea004483946e7c745, type: 3}
-  _singleTape:
-    enabled: 0
-    value: 0
-  _negative: 0
-  _glitch: {r: 1, g: 0, b: 0, a: 1}
-  _frameRate: 20
-  _tape: []
-  _noise: []
-  _shades: []
---- !u!114 &-3029105374736113418
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6f6d27188b5eaa24baa742e3622eaaf9, type: 3}
-  m_Name: ScreenSpaceOutlines
-  m_EditorClassIdentifier: 
-  m_Active: 1
-  renderPassEvent: 350
-  outlinesLayerMask:
-    serializedVersion: 2
-    m_Bits: 4294967295
-  outlineSettings:
-    outlineColor: {r: 0, g: 0, b: 0, a: 1}
-    outlineScale: 1
-    depthThreshold: 17.4
-    robertsCrossMultiplier: 183
-    normalThreshold: 0.35
-    steepAngleThreshold: 0.59
-    steepAngleMultiplier: 245
-    colorFormat: 0
-    depthBufferBits: 0
-    filterMode: 0
-    backgroundColor: {r: 0, g: 0, b: 0, a: 0}
-    perObjectData: 0
-    enableDynamicBatching: 0
-    enableInstancing: 0
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -172,11 +40,9 @@ MonoBehaviour:
       type: 3}
     hdrDebugViewPS: {fileID: 4800000, guid: 573620ae32aec764abd4d728906d2587, type: 3}
   m_RendererFeatures:
-  - {fileID: -6809367965929792747}
-  - {fileID: -3029105374736113418}
-  - {fileID: -5436246308483700716}
   - {fileID: -7181049588051017199}
-  m_RendererFeatureMap: 159bd49de94380a1f6a0a0e7b574f6d514e84cefc8928eb41102c14d72c9579c
+  - {fileID: 83075195475960637}
+  m_RendererFeatureMap: 1102c14d72c9579c3da3fd3b73242701
   m_UseNativeRenderPass: 0
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
   xrSystemData: {fileID: 11400000, guid: 60e1133243b97e347b653163a8c01b64, type: 2}
@@ -219,3 +85,42 @@ MonoBehaviour:
   m_CopyDepthMode: 1
   m_AccurateGbufferNormals: 0
   m_IntermediateTextureMode: 1
+--- !u!114 &83075195475960637
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8a163714fc2589b4c9e843f355ab0fae, type: 3}
+  m_Name: VhsFx
+  m_EditorClassIdentifier: 
+  m_Active: 1
+  _event: 600
+  _pass: {fileID: 7772282525333756393}
+  _blitShader: {fileID: 4800000, guid: c17132b1f77d20942aa75f8429c0f8bc, type: 3}
+--- !u!114 &7772282525333756393
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f8dc78f503ce4704bc3b01f693783c94, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _active: 1
+  _shader: {fileID: 4800000, guid: 074eb04a5009453ea004483946e7c745, type: 3}
+  _singleTape:
+    enabled: 0
+    value: 0
+  _negative: 0
+  _glitch: {r: 1, g: 0, b: 0, a: 1}
+  _frameRate: 20
+  _tape: []
+  _noise: []
+  _shades: []

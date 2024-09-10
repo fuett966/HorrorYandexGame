@@ -9,6 +9,7 @@ TagManager:
   - UIManager
   - SprintWall
   - RotateObject
+  - Joystick
   layers:
   - Default
   - TransparentFX
@@ -28,7 +29,7 @@ TagManager:
   - 
   - WallSprint
   - Outline
-  - 
+  - NoLight
   - 
   - 
   - 
