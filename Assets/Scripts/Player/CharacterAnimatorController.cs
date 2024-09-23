@@ -5,7 +5,6 @@ using UnityEngine;
 public class CharacterAnimatorController : MonoBehaviour
 {
     [SerializeField] private Animator _animator;
-    
     public float velocity;
     public bool isJump;
     public bool isRun;
@@ -31,4 +30,5 @@ public class CharacterAnimatorController : MonoBehaviour
         _animator.SetBool("onGround", onGround);//Motor.GroundingStatus.IsStableOnGround
         _animator.SetBool("isClimbing", isClimbing);
     }
+    
 }

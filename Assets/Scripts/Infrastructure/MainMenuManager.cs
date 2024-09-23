@@ -1,7 +1,9 @@
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 
 public class MainMenuManager : MonoBehaviour
 {
+
     [Header("Windows")]
     [SerializeField] private GameObject _skinsPanel;
     [SerializeField] private GameObject _mainPanel;
@@ -17,14 +19,24 @@ public class MainMenuManager : MonoBehaviour
 
     private void Awake()
     {
+        
+        
+        
         _skinsPanel.SetActive(false);
         _noValuePanel.SetActive(false);
         _donatePanel.SetActive(false);
     }
+    
+    private void Start()
+    { 
+        MainAudioManager.instance.PlayMainSourceAudio(AddressableManager.instance.AmbientData[1].Asset as AudioClip);
+    }
+    
     public async void ChangeScene(int _levelID)
     {
         await LevelLoader.instance.LoadNewSceneAsync(_levelID);
     }
+    
     public void OpenSkins(bool value)
     {
         _skinsPanel.SetActive(value);

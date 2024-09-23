@@ -60,6 +60,11 @@ public class PlayerCharacterController : MonoBehaviour, ICharacterController
 {
     public KinematicCharacterMotor Motor;
 
+    [Header("Audio")]
+    [SerializeField] private AudioClip LandingAudioClip;
+    [SerializeField] private AudioClip[] FootstepAudioClips;
+    [Range(0, 1)] public float FootstepAudioVolume = 0.5f;
+
     [Header("Flags")]
     public bool CanSwim = false;
     public bool CanClimb = false;
@@ -1116,6 +1121,26 @@ public class PlayerCharacterController : MonoBehaviour, ICharacterController
                     }
                     break;
                 }
+        }
+    }
+
+    private void OnFootstep(AnimationEvent animationEvent)
+    {
+        if (animationEvent.animatorClipInfo.weight > 0.5f)
+        {
+            if (FootstepAudioClips.Length > 0)
+            {
+                var index = UnityEngine.Random.Range(0, FootstepAudioClips.Length);
+                AudioSource.PlayClipAtPoint(FootstepAudioClips[index], transform.TransformPoint(Motor.CharacterTransformToCapsuleCenter), FootstepAudioVolume);
+            }
+        }
+    }
+
+    private void OnLand(AnimationEvent animationEvent)
+    {
+        if (animationEvent.animatorClipInfo.weight > 0.5f)
+        {
+            AudioSource.PlayClipAtPoint(LandingAudioClip, transform.TransformPoint(Motor.CharacterTransformToCapsuleCenter), FootstepAudioVolume);
         }
     }
 }

@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class MainAudioManager : MonoSingleton<MainAudioManager>
 {
-    [SerializeField] private AudioSource _mainAudioSource;
+    [SerializeField] private AudioSource _mainAudioSource; 
 
     public void PlayMainAudioSourceClipOneShot(AudioClip _clip)
     {
@@ -20,6 +20,9 @@ public class MainAudioManager : MonoSingleton<MainAudioManager>
         _mainAudioSource.clip = _clip;
         _mainAudioSource.Play();
     }
-    
-    
+    public void PauseMainSourceAudio()
+    {
+        _mainAudioSource.Pause();
+    }
+
 }

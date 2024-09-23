@@ -21,4 +21,8 @@ public class MainGameUIManager : MonoBehaviour
             touchSwipeInput.SetActive(false);
         }
     }
+    private void Start()
+    {
+        
+    }
 }

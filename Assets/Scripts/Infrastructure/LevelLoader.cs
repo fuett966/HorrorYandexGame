@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using Cysharp.Threading.Tasks;
+using UnityEngine.AddressableAssets;
 
 public class LevelLoader : MonoSingleton<LevelLoader>
 {
@@ -52,30 +53,6 @@ public class LevelLoader : MonoSingleton<LevelLoader>
 
     }
 
-    /*public bool SetActiveLoadingUI(bool value)
-    {
-        if (_isTranslatedLoadScreen)
-        {
-            return false;
-        }
-        _isTranslatedLoadScreen = true;
-        if (value)
-        {
-            _loadScreen.DOFade(1f, 1f).OnComplete(() =>
-        {
-            _isTranslatedLoadScreen = false;
-        });
-        }
-        else
-        {
-            _loadScreen.DOFade(0, 1f).OnComplete(() =>
-        {
-            _isTranslatedLoadScreen = false;
-        });
-        }
-        return true;
-    }*/
-
     public void FastSetActiveLoadingUI(bool value)
     {
         if (value)
@@ -89,113 +66,61 @@ public class LevelLoader : MonoSingleton<LevelLoader>
 
     }
 
-    public async UniTask LoadNewSceneAsync(string _buildSceneName)
+    public async UniTask LoadNewSceneAsync(string newBuildSceneName)
     {
-        if (_isSceneLoading)
-        {
-            return;
-        }
-        _isSceneLoading = true;
-        await SetActiveLoadingUI(true);
-        await LoadSceneAsync(_buildSceneName);
-        await SetActiveLoadingUI(false);
-        _isSceneLoading = false;
+        await LoadProcess(SceneManager.GetSceneByName(newBuildSceneName).buildIndex);
     }
-    public async UniTask LoadNewSceneAsync(int _buildSceneIndex)
+    
+    public async UniTask LoadNewSceneAsync(int newBuildSceneIndex)
     {
-        if (_isSceneLoading)
-        {
-            return;
-        }
-        _isSceneLoading = true;
-        await SetActiveLoadingUI(true);
-        await LoadSceneAsync(_buildSceneIndex);
-        await SetActiveLoadingUI(false);
-        _isSceneLoading = false;
+        await LoadProcess(newBuildSceneIndex);
     }
+    
     public async UniTask LoadNewSceneAsync()
     {
+        await LoadProcess(SceneManager.GetActiveScene().buildIndex + 1);
+    }
+
+    private async UniTask LoadProcess(int buildIndex)
+    {
         if (_isSceneLoading)
         {
             return;
         }
         _isSceneLoading = true;
         await SetActiveLoadingUI(true);
-        await LoadSceneAsync(SceneManager.GetActiveScene().buildIndex + 1);
+        MainAudioManager.instance.PauseMainSourceAudio();
+        await LoadAmbientAsync(AddressableManager.instance.AmbientData[buildIndex]);
+        await LoadSceneAsync(buildIndex);
         await SetActiveLoadingUI(false);
         _isSceneLoading = false;
     }
 
+    private async UniTask LoadAmbientAsync(AssetReference reference)
+    {
+        var operation = reference.LoadAssetAsync<AudioClip>();
+        while (!operation.IsDone)
+        {
+            loadingBar.value = Mathf.Lerp(0, 0.5f, operation.PercentComplete / 0.9f);
+            await UniTask.Yield(); 
+        }  
+    }
+    
     private async UniTask LoadSceneAsync(int _buildSceneIndex)
     {
         AsyncOperation asyncLoad = SceneManager.LoadSceneAsync(_buildSceneIndex);
-        asyncLoad.allowSceneActivation = false;
-        // Ожидание завершения загрузки и обновление прогресса
+        asyncLoad.allowSceneActivation = false; 
         while (!asyncLoad.isDone)
-        {
-            //или проверяем нажание
+        { 
             if (asyncLoad.progress >= .9f && !asyncLoad.allowSceneActivation)
             {
                 asyncLoad.allowSceneActivation = true;
                 _isNextSceneLoaded = true;
             }
-            loadingBar.value = Mathf.Lerp(0, 1, asyncLoad.progress / 0.9f);
+            loadingBar.value = Mathf.Lerp(0.5f, 1, asyncLoad.progress / 0.9f);
             await UniTask.Yield(); 
         }
         
         _isSceneActive = true;
     }
-    private async UniTask LoadSceneAsync(string _buildSceneName)
-    {
-        AsyncOperation asyncLoad = SceneManager.LoadSceneAsync(_buildSceneName);
-        asyncLoad.allowSceneActivation = false;
-        // Ожидание завершения загрузки и обновление прогресса
-        while (!asyncLoad.isDone)
-        {
-            //или проверяем нажание
-            if (asyncLoad.progress >= .9f && !asyncLoad.allowSceneActivation)
-            {
-                asyncLoad.allowSceneActivation = true;
-                _isNextSceneLoaded = true;
-            }
-            loadingBar.value = Mathf.Lerp(0, 1, asyncLoad.progress / 0.9f);
-            await UniTask.Yield();
-        }
-        
-        _isSceneActive = true;
-    }
-
-    /*private IEnumerator LoadSceneAsync(int _buildSceneIndex)
-    {
-        AsyncOperation _loadAsync = SceneManager.LoadSceneAsync(_buildSceneIndex);
-        _loadAsync.allowSceneActivation = false;
-
-        while (!_loadAsync.isDone)
-        {
-            if (_loadAsync.progress >= .9f && !_loadAsync.allowSceneActivation)
-            {
-                yield return new WaitForSeconds(1.2f);
-                _loadAsync.allowSceneActivation = true;
-            }
-
-            yield return null;
-        }
-    }
-    private IEnumerator LoadSceneAsync(string _buildSceneName)
-    {
-        AsyncOperation _loadAsync = SceneManager.LoadSceneAsync(_buildSceneName);
-        _loadAsync.allowSceneActivation = false;
-
-        while (!_loadAsync.isDone)
-        {
-            if (_loadAsync.progress >= .9f && !_loadAsync.allowSceneActivation)
-            {
-                yield return new WaitForSeconds(1.2f);
-                _loadAsync.allowSceneActivation = true;
-            }
-
-            yield return null;
-        }
-    }*/
-
 }
