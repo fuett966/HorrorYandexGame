@@ -17,6 +17,7 @@ public class MainAudioManager : MonoSingleton<MainAudioManager>
     }
     public void PlayMainSourceAudio(AudioClip _clip)
     {
+        
         _mainAudioSource.clip = _clip;
         _mainAudioSource.Play();
     }

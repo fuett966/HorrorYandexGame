@@ -95,7 +95,8 @@ public class MainPlayerController : MonoBehaviour
         characterInputs.ChargingDown = InputManager.instance.Charge;
         characterInputs.NoClipDown = InputManager.instance.NoClip;
         characterInputs.Sprint = InputManager.instance.Sprint;
-
+        characterInputs.Attack = InputManager.instance.Fire;
+        
         Character.SetInputs(ref characterInputs);
     }
 }

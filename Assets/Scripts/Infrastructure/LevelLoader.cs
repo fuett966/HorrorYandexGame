@@ -90,7 +90,7 @@ public class LevelLoader : MonoSingleton<LevelLoader>
         _isSceneLoading = true;
         await SetActiveLoadingUI(true);
         MainAudioManager.instance.PauseMainSourceAudio();
-        await LoadAmbientAsync(AddressableManager.instance.AmbientData[buildIndex]);
+        //await LoadAmbientAsync(AddressableManager.instance.AmbientData[buildIndex]);
         await LoadSceneAsync(buildIndex);
         await SetActiveLoadingUI(false);
         _isSceneLoading = false;

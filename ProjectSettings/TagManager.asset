@@ -10,6 +10,10 @@ TagManager:
   - SprintWall
   - RotateObject
   - Joystick
+  - Detonate
+  - FxTemporaire
+  - DamagedScreen
+  - WeaponInfoUI
   layers:
   - Default
   - TransparentFX
@@ -30,8 +34,8 @@ TagManager:
   - WallSprint
   - Outline
   - NoLight
-  - 
-  - 
+  - Boss
+  - Detonate
   - 
   - 
   - 

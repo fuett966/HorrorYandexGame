@@ -12,6 +12,8 @@ public class CharacterAnimatorController : MonoBehaviour
     public bool isWallSprint;
     public bool isClimbing;
     public bool isWallRunRight;
+    public bool isAttack;
+    public bool isDash;
     
 
     void Start()
@@ -27,8 +29,29 @@ public class CharacterAnimatorController : MonoBehaviour
         _animator.SetBool("isWallSprint", isWallSprint);
         _animator.SetBool("isRun", isRun);
         _animator.SetBool("isJump", isJump);
-        _animator.SetBool("onGround", onGround);//Motor.GroundingStatus.IsStableOnGround
+        _animator.SetBool("onGround", onGround);
         _animator.SetBool("isClimbing", isClimbing);
+        _animator.SetBool("isAttack", isAttack);  
     }
-    
+
+    public void PlayDashAnimation()
+    {
+        _animator.SetTrigger("Dash");
+    }
+    public void PlayJumpAnimation()
+    {
+        _animator.SetTrigger("Jump");
+    }
+    public void PlayDoubleJumpAnimation()
+    {
+        _animator.SetTrigger("DoubleJump");
+    }
+    public void PlayAttackAnimation()
+    {
+        _animator.SetTrigger("Attack");
+    }
+    public void EndDashAnimation()
+    {
+        _animator.SetTrigger("DashExit");
+    } 
 }

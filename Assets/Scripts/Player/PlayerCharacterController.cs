@@ -16,8 +16,7 @@ public enum CharacterState
     Charging,
     Swimming,
     Climbing,
-    AFK,
-    WallSprint
+    AFK, 
 }
 
 public enum ClimbingState
@@ -54,6 +53,7 @@ public struct PlayerCharacterInputs
     public bool ChargingDown;
     public bool ClimbLadder;
     public bool Sprint;
+    public bool Attack;
 }
 
 public class PlayerCharacterController : MonoBehaviour, ICharacterController
@@ -109,6 +109,8 @@ public class PlayerCharacterController : MonoBehaviour, ICharacterController
     [Header("Charging")] public float ChargeSpeed = 15f;
     public float MaxChargeTime = 1.5f;
     public float StoppedTime = 1f;
+    public float ChargeReloadTimer = 1f;
+    public bool ReloadTimerOnGround = true; 
 
     [Header("Ladder Climbing")] public float ClimbingSpeed = 4f;
     public float AnchoringDuration = 0.25f;
@@ -119,6 +121,7 @@ public class PlayerCharacterController : MonoBehaviour, ICharacterController
     public float SwimmingSpeed = 4f;
     public float SwimmingMovementSharpness = 3;
     public float SwimmingOrientationSharpness = 2f;
+    
 
     [Header("Misc")] public List<Collider> IgnoredColliders = new List<Collider>();
     public BonusOrientationMethod BonusOrientationMethod = BonusOrientationMethod.None;
@@ -155,8 +158,9 @@ public class PlayerCharacterController : MonoBehaviour, ICharacterController
     private bool _mustStopVelocity = false;
     private float _timeSinceStartedCharge = 0;
     private float _timeSinceStopped = 0;
-
-    private bool _isSprint = false;
+    private float _timeChargeReload = 0;
+    private bool _wasOnGround;
+    private bool _isSprint = false; 
 
     private Collider _waterZone;
 
@@ -164,13 +168,18 @@ public class PlayerCharacterController : MonoBehaviour, ICharacterController
 
     private bool _isWallSprint = false;
     private float _wallJumpReload = 0;
-    float wallDetectionRadius = 1f; // Радиус сферы для проверки 
-    float wallDetectionDistance = 1.0f; // Дистанция вперед от персонажа для проверки
+    float wallDetectionRadius = 1f; 
+    float wallDetectionDistance = 1.0f; 
     private Vector3 _wallRunDirection;
 
     private CharacterAnimatorController _animatorController;
 
 
+
+    private bool isGrabbing;
+    private Vector3 grabPoint;
+    private bool isFalling;
+    private Rigidbody rb;
 
 
 
@@ -276,6 +285,8 @@ public class PlayerCharacterController : MonoBehaviour, ICharacterController
                 }
             case CharacterState.Charging:
                 {
+                    
+                    _animatorController.PlayDashAnimation();
                     _currentChargeVelocity = Motor.CharacterForward * ChargeSpeed;
                     _isStopped = false;
                     _timeSinceStartedCharge = 0f;
@@ -300,11 +311,6 @@ public class PlayerCharacterController : MonoBehaviour, ICharacterController
                         _activeLadder.ClosestPointOnLadderSegment(Motor.TransientPosition, out _onLadderSegmentState);
                     _ladderTargetRotation = _activeLadder.transform.rotation;
                     _animatorController.isClimbing = true;
-                    break;
-                }
-            case CharacterState.WallSprint:
-                {
-
                     break;
                 }
         }
@@ -335,6 +341,11 @@ public class PlayerCharacterController : MonoBehaviour, ICharacterController
                     _animatorController.isClimbing = false;
                     break;
                 }
+            case CharacterState.Charging:
+            {
+                _animatorController.EndDashAnimation();
+                break;
+            }
         }
     }
 
@@ -346,7 +357,7 @@ public class PlayerCharacterController : MonoBehaviour, ICharacterController
 
         _jumpInputIsHeld = inputs.JumpHeld;
         _crouchInputIsHeld = inputs.CrouchHeld;
-        _isSprint = inputs.Sprint;
+        _isSprint = inputs.Sprint; 
 
         // Clamp input
         Vector3 moveInputVector =
@@ -366,7 +377,6 @@ public class PlayerCharacterController : MonoBehaviour, ICharacterController
         if (_wallJumpReload >= 0)
         {
             _wallJumpReload -= Time.deltaTime;
-
         }
 
 
@@ -384,6 +394,12 @@ public class PlayerCharacterController : MonoBehaviour, ICharacterController
                         _timeSinceJumpRequested = 0f;
                         _jumpRequested = true;
                     }
+                    else
+                    {
+                        _jumpRequested = false;
+                    }
+                    
+                    
 
                     // Crouching input
                     if (inputs.CrouchDown)
@@ -401,6 +417,14 @@ public class PlayerCharacterController : MonoBehaviour, ICharacterController
                     {
                         _shouldBeCrouching = false;
                     }
+                    if (inputs.Attack)
+                    {
+                        _animatorController.isAttack = true; 
+                    }
+                    else
+                    {
+                        _animatorController.isAttack = false;
+                    }
 
                     break;
                 }
@@ -416,7 +440,7 @@ public class PlayerCharacterController : MonoBehaviour, ICharacterController
                     _jumpRequested = inputs.JumpHeld;
 
                     _moveInputVector = inputs.CameraRotation * moveInputVector;
-                    _lookInputVector = cameraPlanarDirection;
+                    //_lookInputVector = cameraPlanarDirection;
                     break;
                 }
         }
@@ -437,11 +461,25 @@ public class PlayerCharacterController : MonoBehaviour, ICharacterController
                 TransitionToState(CharacterState.Default);
             }
         }
+        
+        if (_timeChargeReload > 0)
+        {
+            _timeChargeReload -= Time.deltaTime;
+        }
 
-        if (inputs.ChargingDown)
+        if (Motor.GroundingStatus.IsStableOnGround && !_wasOnGround)
+        {
+            _wasOnGround = true;
+        }
+        
+        if (inputs.ChargingDown && _timeChargeReload <= 0 && _wasOnGround)
         {
             TransitionToState(CharacterState.Charging);
+            _timeChargeReload = ChargeReloadTimer;
+            _wasOnGround = false;
         }
+
+        
 
         _ladderUpDownInput = inputs.MoveAxisForward;
 
@@ -589,7 +627,7 @@ public class PlayerCharacterController : MonoBehaviour, ICharacterController
 
                             // Set the current rotation (which will be used by the KinematicCharacterMotor)
                             currentRotation = Quaternion.LookRotation(smoothedLookInputDirection, Motor.CharacterUp);
-                            // _wallRunDirection - переменная направления бега по стене
+                            // _wallRunDirection - пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
                         }
                     }
 
@@ -695,6 +733,8 @@ public class PlayerCharacterController : MonoBehaviour, ICharacterController
                                 _animatorController.isWallSprint = false;
                                 _animatorController.velocity = 0f;
                                 _animatorController.onGround = false;
+                                //_animatorController.PlayJumpAnimation();
+                                
                                 targetMovementVelocity = _moveInputVector * (_isSprint ? MaxInAirSprintingSpeed : MaxAirMoveSpeed);
                                 if (Motor.GroundingStatus.FoundAnyGround)
                                 {
@@ -713,7 +753,7 @@ public class PlayerCharacterController : MonoBehaviour, ICharacterController
                         {
                             _animatorController.isWallSprint = false;
                             _animatorController.velocity = 0f;
-                            _animatorController.onGround = false;
+                            _animatorController.onGround = false; 
                         }
                         currentVelocity += Gravity * deltaTime;
                         currentVelocity *= (1f / (1f + (Drag * deltaTime)));
@@ -738,6 +778,7 @@ public class PlayerCharacterController : MonoBehaviour, ICharacterController
                                     currentVelocity += (Motor.CharacterUp * JumpSpeed) -
                                                        Vector3.Project(currentVelocity, Motor.CharacterUp);
                                     _animatorController.isJump = true;
+                                    _animatorController.PlayDoubleJumpAnimation();
                                     _jumpRequested = false;
                                     _doubleJumpConsumed = true;
                                     _jumpedThisFrame = true;
@@ -757,10 +798,12 @@ public class PlayerCharacterController : MonoBehaviour, ICharacterController
                                 // Calculate jump direction before ungrounding
                                 Vector3 jumpDirection = Motor.CharacterUp;
                                 _animatorController.onGround = false;
+                                _animatorController.PlayJumpAnimation();
                                 if (_canWallJump)
                                 {
                                     jumpDirection = _wallJumpNormal + (Motor.CharacterUp * WallJumpVectorUpModifire);
                                     _wallRunDirection = Vector3.zero;
+                                    
                                 }
                                 else if (Motor.GroundingStatus.FoundAnyGround && !Motor.GroundingStatus.IsStableOnGround)
                                 {
@@ -771,7 +814,7 @@ public class PlayerCharacterController : MonoBehaviour, ICharacterController
                                 // Makes the character skip ground probing/snapping on its next update. 
                                 // If this line weren't here, the character would remain snapped to the ground when trying to jump. Try commenting this line out and see.
                                 Motor.ForceUnground(0.1f);
-
+                                
                                 // Add to the return velocity and reset jump state
                                 currentVelocity += (jumpDirection * JumpSpeed) -
                                                    Vector3.Project(currentVelocity, Motor.CharacterUp);
@@ -794,6 +837,7 @@ public class PlayerCharacterController : MonoBehaviour, ICharacterController
                     _animatorController.velocity = currentVelocity.magnitude;
                     break;
                 }
+            
             case CharacterState.NoClip:
                 {
                     float verticalInput = 0f + (_jumpInputIsHeld ? 1f : 0f) + (_crouchInputIsHeld ? -1f : 0f);
@@ -813,11 +857,11 @@ public class PlayerCharacterController : MonoBehaviour, ICharacterController
             case CharacterState.Charging:
                 {
                     // If we have stopped and need to cancel velocity, do it here
-                    if (_mustStopVelocity)
+                    /*if (_mustStopVelocity)
                     {
                         currentVelocity = Vector3.zero;
                         _mustStopVelocity = false;
-                    }
+                    }*/
 
                     if (_isStopped)
                     {
@@ -827,10 +871,10 @@ public class PlayerCharacterController : MonoBehaviour, ICharacterController
                     else
                     {
                         // When charging, velocity is always constant
-                        float previousY = currentVelocity.y;
+                        //float previousY = currentVelocity.y;
                         currentVelocity = _currentChargeVelocity;
-                        currentVelocity.y = previousY;
-                        currentVelocity += Gravity * deltaTime;
+                        //currentVelocity.y = previousY;
+                        currentVelocity += Motor.CharacterForward * deltaTime;
                     }
 
                     break;
@@ -1143,4 +1187,6 @@ public class PlayerCharacterController : MonoBehaviour, ICharacterController
             AudioSource.PlayClipAtPoint(LandingAudioClip, transform.TransformPoint(Motor.CharacterTransformToCapsuleCenter), FootstepAudioVolume);
         }
     }
+    
+    
 }

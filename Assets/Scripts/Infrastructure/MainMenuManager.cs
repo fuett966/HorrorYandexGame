@@ -3,7 +3,7 @@ using UnityEngine.AddressableAssets;
 
 public class MainMenuManager : MonoBehaviour
 {
-
+    [SerializeField] private AudioClip _clip;
     [Header("Windows")]
     [SerializeField] private GameObject _skinsPanel;
     [SerializeField] private GameObject _mainPanel;
@@ -29,7 +29,9 @@ public class MainMenuManager : MonoBehaviour
     
     private void Start()
     { 
-        MainAudioManager.instance.PlayMainSourceAudio(AddressableManager.instance.AmbientData[1].Asset as AudioClip);
+        //Debug.Log(AddressableManager.instance.AmbientData[1].Asset as AudioClip);
+        //MainAudioManager.instance.PlayMainSourceAudio(AddressableManager.instance.AmbientData[1].Asset as AudioClip);
+        MainAudioManager.instance.PlayMainSourceAudio(_clip);
     }
     
     public async void ChangeScene(int _levelID)

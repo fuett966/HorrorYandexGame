@@ -56,11 +56,11 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _IrisColorTex:
-        m_Texture: {fileID: 2800000, guid: 7bd74139aa85dd14ea81a6fe54bd8465, type: 3}
+        m_Texture: {fileID: 2800000, guid: cc642d5f2921567418563db05f9daae7, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _IrisTex:
-        m_Texture: {fileID: 2800000, guid: d6f59e45d58f66344811c1af0bf412a2, type: 3}
+        m_Texture: {fileID: 2800000, guid: 73889f4b70f52464cacde8ec16abc9f2, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
@@ -95,22 +95,22 @@ Material:
     m_Floats:
     - _QueueControl: 0
     - _QueueOffset: 0
-    - _brightShift: 1
+    - _brightShift: 12.92
     - _irisShadowAmt: 0
-    - _irisSize: 1.73
-    - _limbus: 0.214
-    - _parallax: 0.05
-    - _pupilSize: 0.664
-    - _reflectTerm: 0
-    - _scleraShadowAmt: 0
-    - _scleraSize: 1.05
-    - _smoothness: 0.475
-    - _specsize: 0.539
+    - _irisSize: 1.5
+    - _limbus: 0
+    - _parallax: 0
+    - _pupilSize: 1
+    - _reflectTerm: 0.421
+    - _scleraShadowAmt: 0.477
+    - _scleraSize: 1.28
+    - _smoothness: 0.428
+    - _specsize: 0.589
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _illumColor: {r: 0, g: 0.85017896, b: 1, a: 0}
-    - _irisColor: {r: 0.24007654, g: 0.5755175, b: 0.6132076, a: 1}
-    - _limbalColor: {r: 0, g: 0, b: 0, a: 1}
-    - _scleraColor: {r: 0.021181926, g: 0.5296071, b: 0.6415094, a: 1}
+    - _illumColor: {r: 0.007843137, g: 0.71111923, b: 1, a: 0}
+    - _irisColor: {r: 1, g: 1, b: 1, a: 1}
+    - _limbalColor: {r: 0.039215565, g: 0, b: 1, a: 1}
+    - _scleraColor: {r: 0, g: 0.5231595, b: 1, a: 1}
     - _subDermColor: {r: 1, g: 0.1862069, b: 0, a: 0.3137255}
   m_BuildTextureStacks: []

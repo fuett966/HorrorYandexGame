@@ -59,9 +59,13 @@ public class InputManager : MonoSingleton<InputManager>
 
         _input.Player.Jump.started += OnJump;
         _input.Player.Jump.canceled += OnJump;
+        
+        _input.Player.Fire.started += OnFire;
+        _input.Player.Fire.canceled += OnFire;
 
-        /*_input.Player.Charge.started += OnCharge;
-        _input.Player.Charge.canceled -= OnCharge;*/
+        _input.Player.Charge.started += OnCharge;
+        _input.Player.Charge.performed += OnCharge;
+        _input.Player.Charge.canceled += OnCharge;
 
         _input.Player.Interact.started += OnInteract;
         _input.Player.Interact.canceled += OnInteract;
@@ -89,9 +93,13 @@ public class InputManager : MonoSingleton<InputManager>
 
         _input.Player.Jump.started -= OnJump;
         _input.Player.Jump.canceled -= OnJump;
+        
+        _input.Player.Fire.started -= OnFire;
+        _input.Player.Fire.canceled -= OnFire;
 
-        /*_input.Player.Charge.started -= OnCharge;
-        _input.Player.Charge.canceled -= OnCharge;*/
+        _input.Player.Charge.started -= OnCharge;
+        _input.Player.Charge.performed -= OnCharge;
+        _input.Player.Charge.canceled -= OnCharge;
 
         _input.Player.Interact.started -= OnInteract;
         _input.Player.Interact.canceled -= OnInteract;
@@ -122,6 +130,12 @@ public class InputManager : MonoSingleton<InputManager>
         if(context.canceled)jump = false;
         else if(context.started)jump = true;
     }
+    
+    private void OnFire(InputAction.CallbackContext context)
+    {
+        if(context.canceled)fire = false;
+        else if(context.started)fire = true;
+    }
 
     private void OnCrouch(InputAction.CallbackContext context)
     {
@@ -135,8 +149,9 @@ public class InputManager : MonoSingleton<InputManager>
     }
 
     private void OnCharge(InputAction.CallbackContext context)
-    {
-        /*charge = !charge;*/
+    { 
+        if(context.canceled)charge = false;
+        else if(context.started)charge = true;
     }
     private void OnInteract(InputAction.CallbackContext context)
     {
@@ -175,7 +190,7 @@ public class InputManager : MonoSingleton<InputManager>
 
     public void OnCharge(bool value)
     {
-        /*charge = value;*/
+        charge = value;
     }
     public void OnInteract(bool value)
     {
