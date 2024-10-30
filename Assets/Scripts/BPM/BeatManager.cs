@@ -19,8 +19,7 @@ public class BeatManager : MonoSingleton<BeatManager>
     public static event Action OnPulse;
 
     private void Awake()
-    { 
-        
+    {
     }
 
     private void Update()
@@ -29,8 +28,6 @@ public class BeatManager : MonoSingleton<BeatManager>
             return;
 
         InvokePulse();
-        
-        
     }
 
     public void ActivatePulse()
@@ -41,7 +38,8 @@ public class BeatManager : MonoSingleton<BeatManager>
     public void AnalyzeClip()
     {
         _bpm = UniBpmAnalyzer.AnalyzeBpm(_audioSource.clip);
-        Debug.Log("AudioClip bpm: " + _bpm); 
+        
+        Debug.Log("AudioClip bpm: " + _bpm);
     }
 
     private void InvokePulse()

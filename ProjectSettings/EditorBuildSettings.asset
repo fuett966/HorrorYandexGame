@@ -21,7 +21,7 @@ EditorBuildSettings:
     path: Assets/Scenes/Level 2.unity
     guid: a65b262457cf308438f88712bfd11413
   - enabled: 1
-    path: Assets/Scenes/Level Boss.unity
+    path: Assets/Scenes/Level_Boros.unity
     guid: e95caa3d832815842973eeb1461d0e44
   - enabled: 0
     path: Assets/Scenes/Level extra.unity

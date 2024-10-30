@@ -9,9 +9,11 @@ namespace BossBattle
 {
     public class BossBattleController : MonoBehaviour
     {
+        [Header("Misc")]
         [SerializeField] private Transform _playerTransform;
         [SerializeField] private bool _bombAttack;
         [SerializeField] private bool _pawAttack;
+        [SerializeField] private AudioClip _startAudioClip;
         [Header("Bombs")] [SerializeField] private Transform _bombSpawnTransform;
         [SerializeField] private GameObject _bomb;
         [SerializeField] private float _curvePover;
@@ -41,6 +43,7 @@ namespace BossBattle
                 }
             };
         }
+
         private void ShootBomb()
         {
             var bomb = Instantiate(_bomb, _bombSpawnTransform.position, Quaternion.identity);
@@ -65,5 +68,17 @@ namespace BossBattle
                 _playerTransform.position.z);
             GameObject _pawTemp = Instantiate(_paw, spawnPosition, Quaternion.identity);
         }
-    }
+
+        public void StartBossBattle()
+        {
+            MainAudioManager.instance.PlayMainSourceAudio(_startAudioClip);
+            BeatManager.instance.AnalyzeClip();
+            //camera look
+        }
+
+        private void PrepareBossBattle()
+        {
+            
+        }
+}
 }
