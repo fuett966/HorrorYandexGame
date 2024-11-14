@@ -9,7 +9,7 @@ public class MainMenuManager : MonoBehaviour
     [SerializeField] private GameObject _mainPanel;
     [SerializeField] private GameObject _noValuePanel;
     [SerializeField] private GameObject _donatePanel;
-
+    [SerializeField] private GameObject _levelsPanel;
     [Header("Skins windows")]
     [SerializeField] private GameObject _buyByValue;
     [SerializeField] private GameObject _buyByMoney;
@@ -41,7 +41,32 @@ public class MainMenuManager : MonoBehaviour
     
     public void OpenSkins(bool value)
     {
-        _skinsPanel.SetActive(value);
-        _mainPanel.SetActive(!value);
+        if (value)
+        {
+            _skinsPanel.SetActive(true);
+            _mainPanel.SetActive(false);
+            _levelsPanel.SetActive(false);
+        }
+        else
+        {
+            _skinsPanel.SetActive(false);
+            _mainPanel.SetActive(true);
+            _levelsPanel.SetActive(false);
+        }
+    }
+    public void OpenLevels(bool value)
+    {
+        if (value)
+        {
+            _skinsPanel.SetActive(false);
+            _mainPanel.SetActive(false);
+            _levelsPanel.SetActive(true);
+        }
+        else
+        {
+            _skinsPanel.SetActive(false);
+            _mainPanel.SetActive(true);
+            _levelsPanel.SetActive(false);
+        }
     }
 }

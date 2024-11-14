@@ -27,6 +27,7 @@ public class InputManager : MonoSingleton<InputManager>
     private bool reload;
     private bool inventory;
     private bool menu;
+    private bool dance;
 
     public bool NoClip { get => noClip; }
     public bool Charge { get => charge;  }
@@ -41,6 +42,7 @@ public class InputManager : MonoSingleton<InputManager>
     public bool Menu { get => menu; }
     public Vector2 MoveInput { get => moveInput; }
     public Vector2 CameraInput { get => cameraInput; }
+    public bool Dance { get => dance;  }
 
     private void OnEnable()
     {
@@ -59,6 +61,10 @@ public class InputManager : MonoSingleton<InputManager>
 
         _input.Player.Jump.started += OnJump;
         _input.Player.Jump.canceled += OnJump;
+        
+        _input.Player.Dance.started += OnDance;
+        _input.Player.Dance.canceled += OnDance;
+        _input.Player.Dance.performed += OnDance;
         
         _input.Player.Fire.started += OnFire;
         _input.Player.Fire.canceled += OnFire;
@@ -93,6 +99,10 @@ public class InputManager : MonoSingleton<InputManager>
 
         _input.Player.Jump.started -= OnJump;
         _input.Player.Jump.canceled -= OnJump;
+        
+        _input.Player.Dance.started -= OnDance;
+        _input.Player.Dance.canceled -= OnDance;
+        _input.Player.Dance.performed -= OnDance;
         
         _input.Player.Fire.started -= OnFire;
         _input.Player.Fire.canceled -= OnFire;
@@ -162,6 +172,19 @@ public class InputManager : MonoSingleton<InputManager>
     {
         if (context.canceled) sprint = false;
         else if (context.started) sprint = true;
+    }
+    private void OnDance(InputAction.CallbackContext context)
+    {
+        if (context.started)
+        {
+            dance = true;
+        }
+
+        else if (context.canceled)
+        {
+            dance = false;
+        }
+        
     }
 #endif
 

@@ -31,7 +31,7 @@ public class CharacterAnimatorController : MonoBehaviour
         _animator.SetBool("isJump", isJump);
         _animator.SetBool("onGround", onGround);
         _animator.SetBool("isClimbing", isClimbing);
-        _animator.SetBool("isAttack", isAttack);  
+        _animator.SetBool("isAttack", isAttack);   
     }
 
     public void PlayDashAnimation()
@@ -53,5 +53,13 @@ public class CharacterAnimatorController : MonoBehaviour
     public void EndDashAnimation()
     {
         _animator.SetTrigger("DashExit");
+    } 
+    public void PlayDanceAnimation()
+    {
+        _animator.SetTrigger("DanceStart");
+    }
+    public void EndDanceAnimation()
+    {
+        _animator.SetTrigger("DanceExit");
     } 
 }

@@ -15,10 +15,13 @@ EditorBuildSettings:
     path: Assets/Scenes/MainMenu1.unity
     guid: 9fc0d4010bbf28b4594072e72b8655ab
   - enabled: 1
-    path: Assets/Scenes/Level 1.unity
+    path: Assets/Scenes/Level start.unity
     guid: 2076b813d4182794f973529459f5c4c4
   - enabled: 1
-    path: Assets/Scenes/Level 2.unity
+    path: Assets/Scenes/Level roblox obby.unity
+    guid: cf3f19900bded524ab1cc42d8a53684e
+  - enabled: 1
+    path: Assets/Scenes/Level islands.unity
     guid: a65b262457cf308438f88712bfd11413
   - enabled: 1
     path: Assets/Scenes/Level_Boros.unity

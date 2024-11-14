@@ -16,7 +16,8 @@ public enum CharacterState
     Charging,
     Swimming,
     Climbing,
-    AFK, 
+    AFK,
+    Dance
 }
 
 public enum ClimbingState
@@ -25,6 +26,7 @@ public enum ClimbingState
     Climbing,
     DeAnchoring
 }
+
 public enum WallSprintState
 {
     Anchoring,
@@ -54,19 +56,18 @@ public struct PlayerCharacterInputs
     public bool ClimbLadder;
     public bool Sprint;
     public bool Attack;
+    public bool Dance;
 }
 
 public class PlayerCharacterController : MonoBehaviour, ICharacterController
 {
     public KinematicCharacterMotor Motor;
 
-    [Header("Audio")]
-    [SerializeField] private AudioClip LandingAudioClip;
+    [Header("Audio")] [SerializeField] private AudioClip LandingAudioClip;
     [SerializeField] private AudioClip[] FootstepAudioClips;
     [Range(0, 1)] public float FootstepAudioVolume = 0.5f;
 
-    [Header("Flags")]
-    public bool CanSwim = false;
+    [Header("Flags")] public bool CanSwim = false;
     public bool CanClimb = false;
     public bool CanWallSprint = false;
 
@@ -77,15 +78,13 @@ public class PlayerCharacterController : MonoBehaviour, ICharacterController
     [Range(0f, 180f)] public float MaxStableDenivelationAngle = 180f;
     public OrientationMethod OrientationMethod = OrientationMethod.TowardsCamera;
 
-    [Header("Sprinting")]
-    public float MaxSprintingSpeed = 16f;
+    [Header("Sprinting")] public float MaxSprintingSpeed = 16f;
     public float MaxClimbingSprintingSpeed = 7f;
     public float MaxSwimingSprintingSpeed = 7f;
     public float MaxInAirSprintingSpeed = 16f;
 
 
-    [Header("Wall Sprinting")]
-    public float MaxWallSprintingSpeed = 10f;
+    [Header("Wall Sprinting")] public float MaxWallSprintingSpeed = 10f;
     public float WallJumpReloadTime = 1f;
     public float WallSprintMaxTime = 4f;
     public float WallJumpVectorUpModifire = 0.5f;
@@ -110,7 +109,7 @@ public class PlayerCharacterController : MonoBehaviour, ICharacterController
     public float MaxChargeTime = 1.5f;
     public float StoppedTime = 1f;
     public float ChargeReloadTimer = 1f;
-    public bool ReloadTimerOnGround = true; 
+    public bool ReloadTimerOnGround = true;
 
     [Header("Ladder Climbing")] public float ClimbingSpeed = 4f;
     public float AnchoringDuration = 0.25f;
@@ -121,7 +120,7 @@ public class PlayerCharacterController : MonoBehaviour, ICharacterController
     public float SwimmingSpeed = 4f;
     public float SwimmingMovementSharpness = 3;
     public float SwimmingOrientationSharpness = 2f;
-    
+
 
     [Header("Misc")] public List<Collider> IgnoredColliders = new List<Collider>();
     public BonusOrientationMethod BonusOrientationMethod = BonusOrientationMethod.None;
@@ -160,7 +159,9 @@ public class PlayerCharacterController : MonoBehaviour, ICharacterController
     private float _timeSinceStopped = 0;
     private float _timeChargeReload = 0;
     private bool _wasOnGround;
-    private bool _isSprint = false; 
+    private bool _isSprint = false;
+    private bool _isCanDance = false;
+    private bool _isDance = false;
 
     private Collider _waterZone;
 
@@ -168,20 +169,17 @@ public class PlayerCharacterController : MonoBehaviour, ICharacterController
 
     private bool _isWallSprint = false;
     private float _wallJumpReload = 0;
-    float wallDetectionRadius = 1f; 
-    float wallDetectionDistance = 1.0f; 
+    float wallDetectionRadius = 1f;
+    float wallDetectionDistance = 1.0f;
     private Vector3 _wallRunDirection;
 
     private CharacterAnimatorController _animatorController;
-
 
 
     private bool isGrabbing;
     private Vector3 grabPoint;
     private bool isFalling;
     private Rigidbody rb;
-
-
 
 
     Collider[] wallColliders = new Collider[8];
@@ -199,6 +197,7 @@ public class PlayerCharacterController : MonoBehaviour, ICharacterController
             _anchoringStartRotation = Motor.TransientRotation;
         }
     }
+
     private WallSprintState _internalWallSprintState;
 
     private WallSprintState _wallSprintState
@@ -214,7 +213,6 @@ public class PlayerCharacterController : MonoBehaviour, ICharacterController
     }
 
 
-
     private Vector3 _ladderTargetPosition;
     private Quaternion _ladderTargetRotation;
     private float _onLadderSegmentState = 0;
@@ -226,7 +224,12 @@ public class PlayerCharacterController : MonoBehaviour, ICharacterController
     private Vector3 lastInnerNormal = Vector3.zero;
     private Vector3 lastOuterNormal = Vector3.zero;
     private bool hitSomethingThisSweepIteration;
-    public bool HitSomethingThisSweepIteration { get => hitSomethingThisSweepIteration; set => hitSomethingThisSweepIteration = value; }
+
+    public bool HitSomethingThisSweepIteration
+    {
+        get => hitSomethingThisSweepIteration;
+        set => hitSomethingThisSweepIteration = value;
+    }
 
     private void Start()
     {
@@ -268,51 +271,49 @@ public class PlayerCharacterController : MonoBehaviour, ICharacterController
         switch (state)
         {
             case CharacterState.AFK:
-                {
-
-                    break;
-                }
+            {
+                break;
+            }
             case CharacterState.Default:
-                {
-                    break;
-                }
+            {
+                break;
+            }
             case CharacterState.NoClip:
-                {
-                    Motor.SetCapsuleCollisionsActivation(false);
-                    Motor.SetMovementCollisionsSolvingActivation(false);
-                    Motor.SetGroundSolvingActivation(false);
-                    break;
-                }
+            {
+                Motor.SetCapsuleCollisionsActivation(false);
+                Motor.SetMovementCollisionsSolvingActivation(false);
+                Motor.SetGroundSolvingActivation(false);
+                break;
+            }
             case CharacterState.Charging:
-                {
-                    
-                    _animatorController.PlayDashAnimation();
-                    _currentChargeVelocity = Motor.CharacterForward * ChargeSpeed;
-                    _isStopped = false;
-                    _timeSinceStartedCharge = 0f;
-                    _timeSinceStopped = 0f;
-                    break;
-                }
+            {
+                _animatorController.PlayDashAnimation();
+                _currentChargeVelocity = Motor.CharacterForward * ChargeSpeed;
+                _isStopped = false;
+                _timeSinceStartedCharge = 0f;
+                _timeSinceStopped = 0f;
+                break;
+            }
             case CharacterState.Swimming:
-                {
-                    Motor.SetGroundSolvingActivation(false);
-                    break;
-                }
+            {
+                Motor.SetGroundSolvingActivation(false);
+                break;
+            }
             case CharacterState.Climbing:
-                {
-                    _rotationBeforeClimbing = Motor.TransientRotation;
+            {
+                _rotationBeforeClimbing = Motor.TransientRotation;
 
-                    Motor.SetMovementCollisionsSolvingActivation(false);
-                    Motor.SetGroundSolvingActivation(false);
-                    _climbingState = ClimbingState.Anchoring;
+                Motor.SetMovementCollisionsSolvingActivation(false);
+                Motor.SetGroundSolvingActivation(false);
+                _climbingState = ClimbingState.Anchoring;
 
-                    // Store the target position and rotation to snap to
-                    _ladderTargetPosition =
-                        _activeLadder.ClosestPointOnLadderSegment(Motor.TransientPosition, out _onLadderSegmentState);
-                    _ladderTargetRotation = _activeLadder.transform.rotation;
-                    _animatorController.isClimbing = true;
-                    break;
-                }
+                // Store the target position and rotation to snap to
+                _ladderTargetPosition =
+                    _activeLadder.ClosestPointOnLadderSegment(Motor.TransientPosition, out _onLadderSegmentState);
+                _ladderTargetRotation = _activeLadder.transform.rotation;
+                _animatorController.isClimbing = true;
+                break;
+            }
         }
     }
 
@@ -324,23 +325,23 @@ public class PlayerCharacterController : MonoBehaviour, ICharacterController
         switch (state)
         {
             case CharacterState.Default:
-                {
-                    break;
-                }
+            {
+                break;
+            }
             case CharacterState.NoClip:
-                {
-                    Motor.SetCapsuleCollisionsActivation(true);
-                    Motor.SetMovementCollisionsSolvingActivation(true);
-                    Motor.SetGroundSolvingActivation(true);
-                    break;
-                }
+            {
+                Motor.SetCapsuleCollisionsActivation(true);
+                Motor.SetMovementCollisionsSolvingActivation(true);
+                Motor.SetGroundSolvingActivation(true);
+                break;
+            }
             case CharacterState.Climbing:
-                {
-                    Motor.SetMovementCollisionsSolvingActivation(true);
-                    Motor.SetGroundSolvingActivation(true);
-                    _animatorController.isClimbing = false;
-                    break;
-                }
+            {
+                Motor.SetMovementCollisionsSolvingActivation(true);
+                Motor.SetGroundSolvingActivation(true);
+                _animatorController.isClimbing = false;
+                break;
+            }
             case CharacterState.Charging:
             {
                 _animatorController.EndDashAnimation();
@@ -354,10 +355,9 @@ public class PlayerCharacterController : MonoBehaviour, ICharacterController
     /// </summary>
     public void SetInputs(ref PlayerCharacterInputs inputs)
     {
-
         _jumpInputIsHeld = inputs.JumpHeld;
         _crouchInputIsHeld = inputs.CrouchHeld;
-        _isSprint = inputs.Sprint; 
+        _isSprint = inputs.Sprint;
 
         // Clamp input
         Vector3 moveInputVector =
@@ -383,72 +383,98 @@ public class PlayerCharacterController : MonoBehaviour, ICharacterController
         switch (CurrentCharacterState)
         {
             case CharacterState.Default:
+            {
+                // Move and look inputs
+                _moveInputVector = cameraPlanarRotation * moveInputVector;
+                _lookInputVector = cameraPlanarDirection;
+                _isCanDance = true;
+
+                if (_moveInputVector != Vector3.zero)
                 {
-                    // Move and look inputs
-                    _moveInputVector = cameraPlanarRotation * moveInputVector;
-                    _lookInputVector = cameraPlanarDirection;
-
-                    // Jumping input
-                    if (inputs.JumpDown)
-                    {
-                        _timeSinceJumpRequested = 0f;
-                        _jumpRequested = true;
-                    }
-                    else
-                    {
-                        _jumpRequested = false;
-                    }
-                    
-                    
-
-                    // Crouching input
-                    if (inputs.CrouchDown)
-                    {
-                        _shouldBeCrouching = true;
-
-                        if (!_isCrouching)
-                        {
-                            _isCrouching = true;
-                            Motor.SetCapsuleDimensions(0.5f, 1f, 0.5f);
-                            MeshRoot.localScale = new Vector3(1f, 0.5f, 1f);
-                        }
-                    }
-                    else if (inputs.CrouchUp)
-                    {
-                        _shouldBeCrouching = false;
-                    }
-                    if (inputs.Attack)
-                    {
-                        _animatorController.isAttack = true; 
-                    }
-                    else
-                    {
-                        _animatorController.isAttack = false;
-                    }
-
-                    break;
+                    _isCanDance = false;
                 }
+
+                // Jumping input
+                if (inputs.JumpDown)
+                {
+                    _timeSinceJumpRequested = 0f;
+                    _jumpRequested = true;
+                    _isCanDance = false;
+                }
+                else
+                {
+                    _jumpRequested = false;
+                }
+
+
+                // Crouching input
+                if (inputs.CrouchDown)
+                {
+                    _shouldBeCrouching = true;
+                    _isCanDance = false;
+                    if (!_isCrouching)
+                    {
+                        _isCrouching = true;
+                        Motor.SetCapsuleDimensions(0.5f, 1f, 0.5f);
+                        MeshRoot.localScale = new Vector3(1f, 0.5f, 1f);
+                    }
+                }
+                else if (inputs.CrouchUp)
+                {
+                    _shouldBeCrouching = false;
+                }
+
+                if (inputs.Attack)
+                {
+                    _isCanDance = false;
+                    _animatorController.isAttack = true;
+                }
+                else
+                {
+                    _animatorController.isAttack = false;
+                }
+
+                if (_isDance && !_isCanDance)
+                {
+                    _animatorController.EndDanceAnimation();
+                    _isDance = false;
+                }
+
+                if (inputs.Dance && _isCanDance)
+                {
+                    if (!_isDance)
+                    {
+                        _animatorController.PlayDanceAnimation();
+                        _isDance = true;
+                    }
+                }
+
+                break;
+            }
             case CharacterState.NoClip:
-                {
-                    _jumpRequested = inputs.JumpHeld;
-                    _moveInputVector = inputs.CameraRotation * moveInputVector;
-                    _lookInputVector = cameraPlanarDirection;
-                    break;
-                }
+            {
+                _jumpRequested = inputs.JumpHeld;
+                _moveInputVector = inputs.CameraRotation * moveInputVector;
+                _lookInputVector = cameraPlanarDirection;
+                break;
+            }
+            case CharacterState.Dance:
+            {
+                break;
+            }
             case CharacterState.Swimming:
-                {
-                    _jumpRequested = inputs.JumpHeld;
+            {
+                _jumpRequested = inputs.JumpHeld;
 
-                    _moveInputVector = inputs.CameraRotation * moveInputVector;
-                    //_lookInputVector = cameraPlanarDirection;
-                    break;
-                }
+                _moveInputVector = inputs.CameraRotation * moveInputVector;
+                //_lookInputVector = cameraPlanarDirection;
+                break;
+            }
         }
 
 
         if (inputs.NoClipDown)
         {
-
             if (CurrentCharacterState == CharacterState.Default)
             {
                 TransitionToState(CharacterState.NoClip);
@@ -461,7 +487,8 @@ public class PlayerCharacterController : MonoBehaviour, ICharacterController
                 TransitionToState(CharacterState.Default);
             }
         }
-        
+
+
         if (_timeChargeReload > 0)
         {
             _timeChargeReload -= Time.deltaTime;
@@ -471,7 +498,7 @@ public class PlayerCharacterController : MonoBehaviour, ICharacterController
         {
             _wasOnGround = true;
         }
-        
+
         if (inputs.ChargingDown && _timeChargeReload <= 0 && _wasOnGround)
         {
             TransitionToState(CharacterState.Charging);
@@ -479,7 +506,6 @@ public class PlayerCharacterController : MonoBehaviour, ICharacterController
             _wasOnGround = false;
         }
 
-        
 
         _ladderUpDownInput = inputs.MoveAxisForward;
 
@@ -497,14 +523,13 @@ public class PlayerCharacterController : MonoBehaviour, ICharacterController
                         // Transition to ladder climbing state
                         if (CurrentCharacterState == CharacterState.Default)
                         {
-
                             _activeLadder = ladder;
                             TransitionToState(CharacterState.Climbing);
                         }
                         // Transition back to default movement state
-                        else if (CurrentCharacterState == CharacterState.Climbing && _climbingState == ClimbingState.Climbing)
+                        else if (CurrentCharacterState == CharacterState.Climbing &&
+                                 _climbingState == ClimbingState.Climbing)
                         {
-
                             _climbingState = ClimbingState.DeAnchoring;
                             _ladderTargetPosition = Motor.TransientPosition;
                             _ladderTargetRotation = _rotationBeforeClimbing;
@@ -570,29 +595,29 @@ public class PlayerCharacterController : MonoBehaviour, ICharacterController
         switch (CurrentCharacterState)
         {
             case CharacterState.Default:
-                {
-                    break;
-                }
+            {
+                break;
+            }
+            case CharacterState.Dance:
+            {
+                break;
+            }
             case CharacterState.AFK:
-                {
-
-                    break;
-                }
+            {
+                break;
+            }
             case CharacterState.Charging:
+            {
+                // Update times
+                _timeSinceStartedCharge += deltaTime;
+                if (_isStopped)
                 {
-                    // Update times
-                    _timeSinceStartedCharge += deltaTime;
-                    if (_isStopped)
-                    {
-                        _timeSinceStopped += deltaTime;
-                    }
-
-                    break;
+                    _timeSinceStopped += deltaTime;
                 }
 
-
+                break;
+            }
         }
-
     }
 
     /// <summary>
@@ -606,58 +631,58 @@ public class PlayerCharacterController : MonoBehaviour, ICharacterController
         {
             case CharacterState.Default:
             case CharacterState.NoClip:
+            {
+                if (_lookInputVector != Vector3.zero && OrientationSharpness > 0f && _moveInputVector != Vector3.zero)
                 {
-                    if (_lookInputVector != Vector3.zero && OrientationSharpness > 0f && _moveInputVector != Vector3.zero )
+                    // Smoothly interpolate from current to target look direction
+                    Vector3 smoothedLookInputDirection = Vector3.Slerp(Motor.CharacterForward, _moveInputVector,
+                        1 - Mathf.Exp(-OrientationSharpness * deltaTime)).normalized;
+
+                    // Set the current rotation (which will be used by the KinematicCharacterMotor)
+                    currentRotation = Quaternion.LookRotation(smoothedLookInputDirection, Motor.CharacterUp);
+                }
+
+                if (_canWallJump)
+                {
+                    if (_canWallJump
+                        && _isSprint
+                       )
                     {
-                        // Smoothly interpolate from current to target look direction
-                        Vector3 smoothedLookInputDirection = Vector3.Slerp(Motor.CharacterForward, _moveInputVector,
+                        Vector3 smoothedLookInputDirection = Vector3.Slerp(Motor.CharacterForward, _wallRunDirection,
                             1 - Mathf.Exp(-OrientationSharpness * deltaTime)).normalized;
 
                         // Set the current rotation (which will be used by the KinematicCharacterMotor)
                         currentRotation = Quaternion.LookRotation(smoothedLookInputDirection, Motor.CharacterUp);
+                        // _wallRunDirection - ���������� ����������� ���� �� �����
                     }
-                    if (_canWallJump)
-                    { 
-                        if (_canWallJump 
-                             && _isSprint
-                            )
-                        {
-                            Vector3 smoothedLookInputDirection = Vector3.Slerp(Motor.CharacterForward, _wallRunDirection,
-                            1 - Mathf.Exp(-OrientationSharpness * deltaTime)).normalized;
-
-                            // Set the current rotation (which will be used by the KinematicCharacterMotor)
-                            currentRotation = Quaternion.LookRotation(smoothedLookInputDirection, Motor.CharacterUp);
-                            // _wallRunDirection - ���������� ����������� ���� �� �����
-                        }
-                    }
-
-                    if (OrientTowardsGravity)
-                    {
-                        // Rotate from current up to invert gravity
-                        currentRotation = Quaternion.FromToRotation((currentRotation * Vector3.up), -Gravity) *
-                                          currentRotation;
-                    }
-
-
-
-                    break;
                 }
-            case CharacterState.Climbing:
+
+                if (OrientTowardsGravity)
                 {
-                    switch (_climbingState)
-                    {
-                        case ClimbingState.Climbing:
-                            currentRotation = _activeLadder.transform.rotation;
-                            break;
-                        case ClimbingState.Anchoring:
-                        case ClimbingState.DeAnchoring:
-                            currentRotation = Quaternion.Slerp(_anchoringStartRotation, _ladderTargetRotation,
-                                (_anchoringTimer / AnchoringDuration));
-                            break;
-                    }
-
-                    break;
+                    // Rotate from current up to invert gravity
+                    currentRotation = Quaternion.FromToRotation((currentRotation * Vector3.up), -Gravity) *
+                                      currentRotation;
                 }
+
+
+                break;
+            }
+            case CharacterState.Climbing:
+            {
+                switch (_climbingState)
+                {
+                    case ClimbingState.Climbing:
+                        currentRotation = _activeLadder.transform.rotation;
+                        break;
+                    case ClimbingState.Anchoring:
+                    case ClimbingState.DeAnchoring:
+                        currentRotation = Quaternion.Slerp(_anchoringStartRotation, _ladderTargetRotation,
+                            (_anchoringTimer / AnchoringDuration));
+                        break;
+                }
+
+                break;
+            }
         }
     }
 
@@ -671,276 +696,297 @@ public class PlayerCharacterController : MonoBehaviour, ICharacterController
         switch (CurrentCharacterState)
         {
             case CharacterState.Default:
+            {
+                Vector3 targetMovementVelocity = Vector3.zero;
+                if (Motor.GroundingStatus.IsStableOnGround)
                 {
-                    Vector3 targetMovementVelocity = Vector3.zero;
-                    if (Motor.GroundingStatus.IsStableOnGround)
+                    // Reorient velocity on slope 
+                    currentVelocity =
+                        Motor.GetDirectionTangentToSurface(currentVelocity, Motor.GroundingStatus.GroundNormal) *
+                        currentVelocity.magnitude;
+
+                    // Calculate target velocity
+                    Vector3 inputRight = Vector3.Cross(_moveInputVector, Motor.CharacterUp);
+                    Vector3 reorientedInput = Vector3.Cross(Motor.GroundingStatus.GroundNormal, inputRight).normalized *
+                                              _moveInputVector.magnitude;
+                    targetMovementVelocity = reorientedInput * (_isSprint ? MaxSprintingSpeed : MaxStableMoveSpeed);
+
+                    // Smooth movement Velocity
+                    currentVelocity = Vector3.Lerp(currentVelocity, targetMovementVelocity,
+                        1 - Mathf.Exp(-StableMovementSharpness * deltaTime));
+
+
+                    if (_isSprint) _animatorController.isRun = true;
+                    else _animatorController.isRun = false;
+                    _animatorController.velocity = currentVelocity.magnitude;
+                    _animatorController.onGround = true;
+                    _animatorController.isJump = false;
+                    _animatorController.isWallSprint = false;
+                }
+                else
+                {
+                    if (_moveInputVector.sqrMagnitude > 0f)
                     {
-                        // Reorient velocity on slope 
-                        currentVelocity =
-                            Motor.GetDirectionTangentToSurface(currentVelocity, Motor.GroundingStatus.GroundNormal) *
-                            currentVelocity.magnitude;
-
-                        // Calculate target velocity
-                        Vector3 inputRight = Vector3.Cross(_moveInputVector, Motor.CharacterUp);
-                        Vector3 reorientedInput = Vector3.Cross(Motor.GroundingStatus.GroundNormal, inputRight).normalized *
-                                                  _moveInputVector.magnitude;
-                        targetMovementVelocity = reorientedInput * (_isSprint ? MaxSprintingSpeed : MaxStableMoveSpeed);
-
-                        // Smooth movement Velocity
-                        currentVelocity = Vector3.Lerp(currentVelocity, targetMovementVelocity,
-                            1 - Mathf.Exp(-StableMovementSharpness * deltaTime));
-
-
-                        if (_isSprint) _animatorController.isRun = true;
-                        else _animatorController.isRun = false;
-                        _animatorController.velocity = currentVelocity.magnitude;
-                        _animatorController.onGround = true;
-                        _animatorController.isJump = false;
-                        _animatorController.isWallSprint = false;
-                    }
-                    else
-                    {
-                        if (_moveInputVector.sqrMagnitude > 0f)
+                        if (_canWallJump)
                         {
-                            if (_canWallJump)
+                            if (_canWallJump
+                                && _isSprint
+                                && currentVelocity.magnitude > 1f)
                             {
-
-                                if (_canWallJump 
-                                     && _isSprint 
-                                    && currentVelocity.magnitude > 1f)
+                                _animatorController.isJump = false;
+                                if (_wallRunDirection == Vector3.zero)
                                 {
-                                    _animatorController.isJump = false;
-                                    if (_wallRunDirection == Vector3.zero)
+                                    _wallRunDirection = Vector3.Cross(_wallJumpNormal, Motor.CharacterUp).normalized;
+
+                                    if (Vector3.Dot(_wallRunDirection, currentVelocity) < 0)
                                     {
-                                        _wallRunDirection = Vector3.Cross(_wallJumpNormal, Motor.CharacterUp).normalized;
-
-                                        if (Vector3.Dot(_wallRunDirection, currentVelocity) < 0)
-                                        {
-                                            _wallRunDirection = -_wallRunDirection;
-                                            _animatorController.isWallRunRight = true;
-                                        }
-                                        else
-                                        {
-                                            _animatorController.isWallRunRight = false;
-                                        }
+                                        _wallRunDirection = -_wallRunDirection;
+                                        _animatorController.isWallRunRight = true;
                                     }
-                                    _animatorController.isWallSprint = true;
-                                    currentVelocity = _wallRunDirection * MaxWallSprintingSpeed;
-                                }
-                            }
-                            else
-                            {
-                                _animatorController.isWallSprint = false;
-                                _animatorController.velocity = 0f;
-                                _animatorController.onGround = false;
-                                //_animatorController.PlayJumpAnimation();
-                                
-                                targetMovementVelocity = _moveInputVector * (_isSprint ? MaxInAirSprintingSpeed : MaxAirMoveSpeed);
-                                if (Motor.GroundingStatus.FoundAnyGround)
-                                {
-                                    Vector3 perpenticularObstructionNormal = Vector3
-                                        .Cross(Vector3.Cross(Motor.CharacterUp, Motor.GroundingStatus.GroundNormal),
-                                            Motor.CharacterUp).normalized;
-                                    targetMovementVelocity =
-                                        Vector3.ProjectOnPlane(targetMovementVelocity, perpenticularObstructionNormal);
+                                    else
+                                    {
+                                        _animatorController.isWallRunRight = false;
+                                    }
                                 }
 
-                                Vector3 velocityDiff = Vector3.ProjectOnPlane(targetMovementVelocity - currentVelocity, Gravity);
-                                currentVelocity += velocityDiff * AirAccelerationSpeed * deltaTime;
+                                _animatorController.isWallSprint = true;
+                                currentVelocity = _wallRunDirection * MaxWallSprintingSpeed;
                             }
                         }
                         else
                         {
                             _animatorController.isWallSprint = false;
                             _animatorController.velocity = 0f;
-                            _animatorController.onGround = false; 
-                        }
-                        currentVelocity += Gravity * deltaTime;
-                        currentVelocity *= (1f / (1f + (Drag * deltaTime)));
+                            _animatorController.onGround = false;
+                            //_animatorController.PlayJumpAnimation();
 
-                    } 
-                    // Handle jumping
-                    {
-                        _jumpedThisFrame = false;
-                        _timeSinceJumpRequested += deltaTime;
-                        if (_jumpRequested)
-                        {
-
-                            // Handle double jump
-                            if (AllowDoubleJump)
+                            targetMovementVelocity =
+                                _moveInputVector * (_isSprint ? MaxInAirSprintingSpeed : MaxAirMoveSpeed);
+                            if (Motor.GroundingStatus.FoundAnyGround)
                             {
-                                if (!_canWallJump && _jumpConsumed && !_doubleJumpConsumed && (AllowJumpingWhenSliding
-                                        ? !Motor.GroundingStatus.FoundAnyGround
-                                        : !Motor.GroundingStatus.IsStableOnGround) && _wallJumpReload <= 0)
-                                {
-                                    Motor.ForceUnground(0.1f);
-                                    // Add to the return velocity and reset jump state
-                                    currentVelocity += (Motor.CharacterUp * JumpSpeed) -
-                                                       Vector3.Project(currentVelocity, Motor.CharacterUp);
-                                    _animatorController.isJump = true;
-                                    _animatorController.PlayDoubleJumpAnimation();
-                                    _jumpRequested = false;
-                                    _doubleJumpConsumed = true;
-                                    _jumpedThisFrame = true;
-                                }
-                                else
-                                {
-
-                                }
+                                Vector3 perpenticularObstructionNormal = Vector3
+                                    .Cross(Vector3.Cross(Motor.CharacterUp, Motor.GroundingStatus.GroundNormal),
+                                        Motor.CharacterUp).normalized;
+                                targetMovementVelocity =
+                                    Vector3.ProjectOnPlane(targetMovementVelocity, perpenticularObstructionNormal);
                             }
 
-                            // See if we actually are allowed to jump
-                            if ((_canWallJump ||
-                                (!_jumpConsumed && (
-                                (AllowJumpingWhenSliding ? Motor.GroundingStatus.FoundAnyGround : Motor.GroundingStatus.IsStableOnGround) || _timeSinceLastAbleToJump <= JumpPostGroundingGraceTime)))
-                                  && _wallJumpReload <= 0)
-                            {
-                                // Calculate jump direction before ungrounding
-                                Vector3 jumpDirection = Motor.CharacterUp;
-                                _animatorController.onGround = false;
-                                _animatorController.PlayJumpAnimation();
-                                if (_canWallJump)
-                                {
-                                    jumpDirection = _wallJumpNormal + (Motor.CharacterUp * WallJumpVectorUpModifire);
-                                    _wallRunDirection = Vector3.zero;
-                                    
-                                }
-                                else if (Motor.GroundingStatus.FoundAnyGround && !Motor.GroundingStatus.IsStableOnGround)
-                                {
-                                    jumpDirection = Motor.GroundingStatus.GroundNormal;
-                                    _wallRunDirection = Vector3.zero;
-                                }
-                                _wallJumpReload = WallJumpReloadTime;
-                                // Makes the character skip ground probing/snapping on its next update. 
-                                // If this line weren't here, the character would remain snapped to the ground when trying to jump. Try commenting this line out and see.
-                                Motor.ForceUnground(0.1f);
-                                
-                                // Add to the return velocity and reset jump state
-                                currentVelocity += (jumpDirection * JumpSpeed) -
-                                                   Vector3.Project(currentVelocity, Motor.CharacterUp);
-                                _jumpRequested = false;
-                                _jumpConsumed = true;
-                                _jumpedThisFrame = true;
-                            }
+                            Vector3 velocityDiff =
+                                Vector3.ProjectOnPlane(targetMovementVelocity - currentVelocity, Gravity);
+                            currentVelocity += velocityDiff * AirAccelerationSpeed * deltaTime;
                         }
-
-                        // Reset wall jump  
-                        _canWallJump = false;
-                    }
-
-                    // Take into account additive velocity
-                    if (_internalVelocityAdd.sqrMagnitude > 0f)
-                    {
-                        currentVelocity += _internalVelocityAdd;
-                        _internalVelocityAdd = Vector3.zero;
-                    }
-                    _animatorController.velocity = currentVelocity.magnitude;
-                    break;
-                }
-            
-            case CharacterState.NoClip:
-                {
-                    float verticalInput = 0f + (_jumpInputIsHeld ? 1f : 0f) + (_crouchInputIsHeld ? -1f : 0f);
-
-                    // Smoothly interpolate to target velocity
-                    Vector3 targetMovementVelocity = (_moveInputVector + (Motor.CharacterUp * verticalInput)).normalized *
-                                                     (_isSprint ? MaxSprintingSpeed : NoClipMoveSpeed);
-                    currentVelocity = Vector3.Lerp(currentVelocity, targetMovementVelocity,
-                        1 - Mathf.Exp(-NoClipSharpness * deltaTime));
-                    break;
-                }
-            case CharacterState.AFK:
-                {
-                    currentVelocity = Vector3.zero;
-                    break;
-                }
-            case CharacterState.Charging:
-                {
-                    // If we have stopped and need to cancel velocity, do it here
-                    /*if (_mustStopVelocity)
-                    {
-                        currentVelocity = Vector3.zero;
-                        _mustStopVelocity = false;
-                    }*/
-
-                    if (_isStopped)
-                    {
-                        // When stopped, do no velocity handling except gravity
-                        currentVelocity += Gravity * deltaTime;
                     }
                     else
                     {
-                        // When charging, velocity is always constant
-                        //float previousY = currentVelocity.y;
-                        currentVelocity = _currentChargeVelocity;
-                        //currentVelocity.y = previousY;
-                        currentVelocity += Motor.CharacterForward * deltaTime;
+                        _animatorController.isWallSprint = false;
+                        _animatorController.velocity = 0f;
+                        _animatorController.onGround = false;
                     }
 
-                    break;
+                    currentVelocity += Gravity * deltaTime;
+                    currentVelocity *= (1f / (1f + (Drag * deltaTime)));
                 }
 
-            case CharacterState.Climbing:
+                // Handle jumping
                 {
-                    currentVelocity = Vector3.zero;
-
-                    switch (_climbingState)
+                    _jumpedThisFrame = false;
+                    _timeSinceJumpRequested += deltaTime;
+                    if (_jumpRequested)
                     {
-                        case ClimbingState.Climbing:
-                            currentVelocity = (_ladderUpDownInput * _activeLadder.transform.up).normalized * (_isSprint ? MaxClimbingSprintingSpeed : ClimbingSpeed);
-                            break;
-                        case ClimbingState.Anchoring:
-                        case ClimbingState.DeAnchoring:
-                            Vector3 tmpPosition = Vector3.Lerp(_anchoringStartPosition, _ladderTargetPosition,
-                                (_anchoringTimer / AnchoringDuration));
-                            currentVelocity =
-                                Motor.GetVelocityForMovePosition(Motor.TransientPosition, tmpPosition, deltaTime);
-                            break;
-                    }
-                    _animatorController.velocity = currentVelocity.magnitude;
-
-                    break;
-                }
-            case CharacterState.Swimming:
-                {
-                    float verticalInput = 0f + (_jumpInputIsHeld ? 1f : 0f) + (_crouchInputIsHeld ? -1f : 0f);
-
-                    // Smoothly interpolate to target swimming velocity
-                    Vector3 targetMovementVelocity =
-                        (_moveInputVector + (Motor.CharacterUp * verticalInput)).normalized * (_isSprint ? MaxSwimingSprintingSpeed : SwimmingSpeed);
-                    Vector3 smoothedVelocity = Vector3.Lerp(currentVelocity, targetMovementVelocity,
-                        1 - Mathf.Exp(-SwimmingMovementSharpness * deltaTime));
-
-                    // See if our swimming reference point would be out of water after the movement from our velocity has been applied
-                    {
-                        Vector3 resultingSwimmingReferancePosition = Motor.TransientPosition +
-                                                                     (smoothedVelocity * deltaTime) +
-                                                                     (SwimmingReferencePoint.position -
-                                                                      Motor.TransientPosition);
-                        Vector3 closestPointWaterSurface = Physics.ClosestPoint(resultingSwimmingReferancePosition,
-                            _waterZone, _waterZone.transform.position, _waterZone.transform.rotation);
-
-                        // if our position would be outside the water surface on next update, project the velocity on the surface normal so that it would not take us out of the water
-                        if (closestPointWaterSurface != resultingSwimmingReferancePosition)
+                        // Handle double jump
+                        if (AllowDoubleJump)
                         {
-                            /*Vector3 waterSurfaceNormal =
-                                (resultingSwimmingReferancePosition - closestPointWaterSurface).normalized;
-                            smoothedVelocity = Vector3.ProjectOnPlane(smoothedVelocity, waterSurfaceNormal);*/
-
-                            // Jump out of water
-                            if (_jumpRequested)
+                            if (!_canWallJump && _jumpConsumed && !_doubleJumpConsumed && (AllowJumpingWhenSliding
+                                    ? !Motor.GroundingStatus.FoundAnyGround
+                                    : !Motor.GroundingStatus.IsStableOnGround) && _wallJumpReload <= 0)
                             {
-                                smoothedVelocity += (Motor.CharacterUp * JumpSpeed) -
-                                                    Vector3.Project(currentVelocity, Motor.CharacterUp);
+                                Motor.ForceUnground(0.1f);
+                                // Add to the return velocity and reset jump state
+                                currentVelocity += (Motor.CharacterUp * JumpSpeed) -
+                                                   Vector3.Project(currentVelocity, Motor.CharacterUp);
+                                _animatorController.isJump = true;
+                                _animatorController.PlayDoubleJumpAnimation();
+                                _jumpRequested = false;
+                                _doubleJumpConsumed = true;
+                                _jumpedThisFrame = true;
+                            }
+                            else
+                            {
                             }
                         }
 
+                        // See if we actually are allowed to jump
+                        if ((_canWallJump ||
+                             (!_jumpConsumed && (
+                                 (AllowJumpingWhenSliding
+                                     ? Motor.GroundingStatus.FoundAnyGround
+                                     : Motor.GroundingStatus.IsStableOnGround) ||
+                                 _timeSinceLastAbleToJump <= JumpPostGroundingGraceTime)))
+                            && _wallJumpReload <= 0)
+                        {
+                            // Calculate jump direction before ungrounding
+                            Vector3 jumpDirection = Motor.CharacterUp;
+                            _animatorController.onGround = false;
+                            _animatorController.PlayJumpAnimation();
+                            if (_canWallJump)
+                            {
+                                jumpDirection = _wallJumpNormal + (Motor.CharacterUp * WallJumpVectorUpModifire);
+                                _wallRunDirection = Vector3.zero;
+                            }
+                            else if (Motor.GroundingStatus.FoundAnyGround && !Motor.GroundingStatus.IsStableOnGround)
+                            {
+                                jumpDirection = Motor.GroundingStatus.GroundNormal;
+                                _wallRunDirection = Vector3.zero;
+                            }
 
+                            _wallJumpReload = WallJumpReloadTime;
+                            // Makes the character skip ground probing/snapping on its next update. 
+                            // If this line weren't here, the character would remain snapped to the ground when trying to jump. Try commenting this line out and see.
+                            Motor.ForceUnground(0.1f);
+
+                            // Add to the return velocity and reset jump state
+                            currentVelocity += (jumpDirection * JumpSpeed) -
+                                               Vector3.Project(currentVelocity, Motor.CharacterUp);
+                            _jumpRequested = false;
+                            _jumpConsumed = true;
+                            _jumpedThisFrame = true;
+                        }
                     }
 
-                    currentVelocity = smoothedVelocity;
-                    break;
+                    // Reset wall jump  
+                    _canWallJump = false;
                 }
+
+                // Take into account additive velocity
+                if (_internalVelocityAdd.sqrMagnitude > 0f)
+                {
+                    currentVelocity += _internalVelocityAdd;
+                    _internalVelocityAdd = Vector3.zero;
+                }
+
+                _animatorController.velocity = currentVelocity.magnitude;
+                break;
+            }
+
+            case CharacterState.NoClip:
+            {
+                float verticalInput = 0f + (_jumpInputIsHeld ? 1f : 0f) + (_crouchInputIsHeld ? -1f : 0f);
+
+                // Smoothly interpolate to target velocity
+                Vector3 targetMovementVelocity = (_moveInputVector + (Motor.CharacterUp * verticalInput)).normalized *
+                                                 (_isSprint ? MaxSprintingSpeed : NoClipMoveSpeed);
+                currentVelocity = Vector3.Lerp(currentVelocity, targetMovementVelocity,
+                    1 - Mathf.Exp(-NoClipSharpness * deltaTime));
+                break;
+            }
+            case CharacterState.Dance:
+            {
+                if (_moveInputVector.magnitude > 0)
+                {
+                    TransitionToState(CharacterState.Default);
+                }
+
+                if (!Motor.GroundingStatus.IsStableOnGround)
+                {
+                    TransitionToState(CharacterState.Default);
+                }
+
+                currentVelocity += Gravity * deltaTime;
+                break;
+            }
+            case CharacterState.AFK:
+            {
+                currentVelocity = Vector3.zero;
+                break;
+            }
+            case CharacterState.Charging:
+            {
+                // If we have stopped and need to cancel velocity, do it here
+                /*if (_mustStopVelocity)
+                {
+                    currentVelocity = Vector3.zero;
+                    _mustStopVelocity = false;
+                }*/
+
+                if (_isStopped)
+                {
+                    // When stopped, do no velocity handling except gravity
+                    currentVelocity += Gravity * deltaTime;
+                }
+                else
+                {
+                    // When charging, velocity is always constant
+                    //float previousY = currentVelocity.y;
+                    currentVelocity = _currentChargeVelocity;
+                    //currentVelocity.y = previousY;
+                    currentVelocity += Motor.CharacterForward * deltaTime;
+                }
+
+                break;
+            }
+
+            case CharacterState.Climbing:
+            {
+                currentVelocity = Vector3.zero;
+
+                switch (_climbingState)
+                {
+                    case ClimbingState.Climbing:
+                        currentVelocity = (_ladderUpDownInput * _activeLadder.transform.up).normalized *
+                                          (_isSprint ? MaxClimbingSprintingSpeed : ClimbingSpeed);
+                        break;
+                    case ClimbingState.Anchoring:
+                    case ClimbingState.DeAnchoring:
+                        Vector3 tmpPosition = Vector3.Lerp(_anchoringStartPosition, _ladderTargetPosition,
+                            (_anchoringTimer / AnchoringDuration));
+                        currentVelocity =
+                            Motor.GetVelocityForMovePosition(Motor.TransientPosition, tmpPosition, deltaTime);
+                        break;
+                }
+
+                _animatorController.velocity = currentVelocity.magnitude;
+
+                break;
+            }
+            case CharacterState.Swimming:
+            {
+                float verticalInput = 0f + (_jumpInputIsHeld ? 1f : 0f) + (_crouchInputIsHeld ? -1f : 0f);
+
+                // Smoothly interpolate to target swimming velocity
+                Vector3 targetMovementVelocity =
+                    (_moveInputVector + (Motor.CharacterUp * verticalInput)).normalized *
+                    (_isSprint ? MaxSwimingSprintingSpeed : SwimmingSpeed);
+                Vector3 smoothedVelocity = Vector3.Lerp(currentVelocity, targetMovementVelocity,
+                    1 - Mathf.Exp(-SwimmingMovementSharpness * deltaTime));
+
+                // See if our swimming reference point would be out of water after the movement from our velocity has been applied
+                {
+                    Vector3 resultingSwimmingReferancePosition = Motor.TransientPosition +
+                                                                 (smoothedVelocity * deltaTime) +
+                                                                 (SwimmingReferencePoint.position -
+                                                                  Motor.TransientPosition);
+                    Vector3 closestPointWaterSurface = Physics.ClosestPoint(resultingSwimmingReferancePosition,
+                        _waterZone, _waterZone.transform.position, _waterZone.transform.rotation);
+
+                    // if our position would be outside the water surface on next update, project the velocity on the surface normal so that it would not take us out of the water
+                    if (closestPointWaterSurface != resultingSwimmingReferancePosition)
+                    {
+                        /*Vector3 waterSurfaceNormal =
+                            (resultingSwimmingReferancePosition - closestPointWaterSurface).normalized;
+                        smoothedVelocity = Vector3.ProjectOnPlane(smoothedVelocity, waterSurfaceNormal);*/
+
+                        // Jump out of water
+                        if (_jumpRequested)
+                        {
+                            smoothedVelocity += (Motor.CharacterUp * JumpSpeed) -
+                                                Vector3.Project(currentVelocity, Motor.CharacterUp);
+                        }
+                    }
+                }
+
+                currentVelocity = smoothedVelocity;
+                break;
+            }
         }
     }
 
@@ -953,131 +999,129 @@ public class PlayerCharacterController : MonoBehaviour, ICharacterController
         switch (CurrentCharacterState)
         {
             case CharacterState.Default:
+            {
+                // Handle jump-related values
                 {
-                    // Handle jump-related values
+                    // Handle jumping pre-ground grace period
+                    if (_jumpRequested && _timeSinceJumpRequested > JumpPreGroundingGraceTime)
                     {
-                        // Handle jumping pre-ground grace period
-                        if (_jumpRequested && _timeSinceJumpRequested > JumpPreGroundingGraceTime)
-                        {
-                            _jumpRequested = false;
-                        }
-
-                        if (AllowJumpingWhenSliding
-                                ? Motor.GroundingStatus.FoundAnyGround
-                                : Motor.GroundingStatus.IsStableOnGround || _canWallJump)
-                        {
-                            // If we're on a ground surface, reset jumping values
-                            if (!_jumpedThisFrame)
-                            {
-                                _doubleJumpConsumed = false;
-                                _jumpConsumed = false;
-                            }
-
-                            _timeSinceLastAbleToJump = 0f;
-                        }
-                        else
-                        {
-                            // Keep track of time since we were last able to jump (for grace period)
-                            _timeSinceLastAbleToJump += deltaTime;
-                        }
+                        _jumpRequested = false;
                     }
 
-                    // Handle uncrouching
-                    if (_isCrouching && !_shouldBeCrouching)
+                    if (AllowJumpingWhenSliding
+                            ? Motor.GroundingStatus.FoundAnyGround
+                            : Motor.GroundingStatus.IsStableOnGround || _canWallJump)
                     {
-                        // Do an overlap test with the character's standing height to see if there are any obstructions
-                        Motor.SetCapsuleDimensions(0.5f, 2f, 1f);
-                        if (Motor.CharacterOverlap(
-                                Motor.TransientPosition,
-                                Motor.TransientRotation,
-                                _probedColliders,
-                                Motor.CollidableLayers,
-                                QueryTriggerInteraction.Ignore) > 0)
+                        // If we're on a ground surface, reset jumping values
+                        if (!_jumpedThisFrame)
                         {
-                            // If obstructions, just stick to crouching dimensions
-                            Motor.SetCapsuleDimensions(0.5f, 1f, 0.5f);
+                            _doubleJumpConsumed = false;
+                            _jumpConsumed = false;
                         }
-                        else
-                        {
-                            // If no obstructions, uncrouch
-                            MeshRoot.localScale = new Vector3(1f, 1f, 1f);
-                            _isCrouching = false;
-                        }
-                    }
 
-                    break;
+                        _timeSinceLastAbleToJump = 0f;
+                    }
+                    else
+                    {
+                        // Keep track of time since we were last able to jump (for grace period)
+                        _timeSinceLastAbleToJump += deltaTime;
+                    }
                 }
+
+                // Handle uncrouching
+                if (_isCrouching && !_shouldBeCrouching)
+                {
+                    // Do an overlap test with the character's standing height to see if there are any obstructions
+                    Motor.SetCapsuleDimensions(0.5f, 2f, 1f);
+                    if (Motor.CharacterOverlap(
+                            Motor.TransientPosition,
+                            Motor.TransientRotation,
+                            _probedColliders,
+                            Motor.CollidableLayers,
+                            QueryTriggerInteraction.Ignore) > 0)
+                    {
+                        // If obstructions, just stick to crouching dimensions
+                        Motor.SetCapsuleDimensions(0.5f, 1f, 0.5f);
+                    }
+                    else
+                    {
+                        // If no obstructions, uncrouch
+                        MeshRoot.localScale = new Vector3(1f, 1f, 1f);
+                        _isCrouching = false;
+                    }
+                }
+
+                break;
+            }
             case CharacterState.AFK:
-                {
-
-                    break;
-                }
+            {
+                break;
+            }
             case CharacterState.Charging:
+            {
+                // Detect being stopped by elapsed time
+                if (!_isStopped && _timeSinceStartedCharge > MaxChargeTime)
                 {
-                    // Detect being stopped by elapsed time
-                    if (!_isStopped && _timeSinceStartedCharge > MaxChargeTime)
-                    {
-                        _mustStopVelocity = true;
-                        _isStopped = true;
-                    }
-
-                    // Detect end of stopping phase and transition back to default movement state
-                    if (_timeSinceStopped > StoppedTime)
-                    {
-                        TransitionToState(CharacterState.Default);
-                    }
-
-                    break;
+                    _mustStopVelocity = true;
+                    _isStopped = true;
                 }
+
+                // Detect end of stopping phase and transition back to default movement state
+                if (_timeSinceStopped > StoppedTime)
+                {
+                    TransitionToState(CharacterState.Default);
+                }
+
+                break;
+            }
             case CharacterState.Climbing:
+            {
+                switch (_climbingState)
                 {
-                    switch (_climbingState)
-                    {
-                        case ClimbingState.Climbing:
-                            // Detect getting off ladder during climbing
-                            _activeLadder.ClosestPointOnLadderSegment(Motor.TransientPosition, out _onLadderSegmentState);
-                            if (Mathf.Abs(_onLadderSegmentState) > 0.05f)
+                    case ClimbingState.Climbing:
+                        // Detect getting off ladder during climbing
+                        _activeLadder.ClosestPointOnLadderSegment(Motor.TransientPosition, out _onLadderSegmentState);
+                        if (Mathf.Abs(_onLadderSegmentState) > 0.05f)
+                        {
+                            _climbingState = ClimbingState.DeAnchoring;
+
+                            // If we're higher than the ladder top point
+                            if (_onLadderSegmentState > 0)
                             {
-                                _climbingState = ClimbingState.DeAnchoring;
-
-                                // If we're higher than the ladder top point
-                                if (_onLadderSegmentState > 0)
-                                {
-                                    _ladderTargetPosition = _activeLadder.TopReleasePoint.position;
-                                    _ladderTargetRotation = _activeLadder.TopReleasePoint.rotation;
-                                }
-                                // If we're lower than the ladder bottom point
-                                else if (_onLadderSegmentState < 0)
-                                {
-                                    _ladderTargetPosition = _activeLadder.BottomReleasePoint.position;
-                                    _ladderTargetRotation = _activeLadder.BottomReleasePoint.rotation;
-                                }
+                                _ladderTargetPosition = _activeLadder.TopReleasePoint.position;
+                                _ladderTargetRotation = _activeLadder.TopReleasePoint.rotation;
                             }
-
-                            break;
-                        case ClimbingState.Anchoring:
-                        case ClimbingState.DeAnchoring:
-                            // Detect transitioning out from anchoring states
-                            if (_anchoringTimer >= AnchoringDuration)
+                            // If we're lower than the ladder bottom point
+                            else if (_onLadderSegmentState < 0)
                             {
-                                if (_climbingState == ClimbingState.Anchoring)
-                                {
-                                    _climbingState = ClimbingState.Climbing;
-                                }
-                                else if (_climbingState == ClimbingState.DeAnchoring)
-                                {
-                                    TransitionToState(CharacterState.Default);
-                                }
-
+                                _ladderTargetPosition = _activeLadder.BottomReleasePoint.position;
+                                _ladderTargetRotation = _activeLadder.BottomReleasePoint.rotation;
                             }
+                        }
 
-                            // Keep track of time since we started anchoring
-                            _anchoringTimer += deltaTime;
-                            break;
-                    }
+                        break;
+                    case ClimbingState.Anchoring:
+                    case ClimbingState.DeAnchoring:
+                        // Detect transitioning out from anchoring states
+                        if (_anchoringTimer >= AnchoringDuration)
+                        {
+                            if (_climbingState == ClimbingState.Anchoring)
+                            {
+                                _climbingState = ClimbingState.Climbing;
+                            }
+                            else if (_climbingState == ClimbingState.DeAnchoring)
+                            {
+                                TransitionToState(CharacterState.Default);
+                            }
+                        }
 
-                    break;
+                        // Keep track of time since we started anchoring
+                        _anchoringTimer += deltaTime;
+                        break;
                 }
+
+                break;
+            }
         }
     }
 
@@ -1102,25 +1146,29 @@ public class PlayerCharacterController : MonoBehaviour, ICharacterController
         switch (CurrentCharacterState)
         {
             case CharacterState.Default:
+            {
+                // We can wall jump only if we are not stable on ground and are moving against an obstruction
+                if (AllowWallJump && !Motor.GroundingStatus.IsStableOnGround && !hitStabilityReport.IsStable)
                 {
-                    // We can wall jump only if we are not stable on ground and are moving against an obstruction
-                    if (AllowWallJump && !Motor.GroundingStatus.IsStableOnGround && !hitStabilityReport.IsStable)
-                    {
-                        /*_wallJumpNormal = hitNormal;
-                        _canWallJump = true;*/
-                    }
-                    if (AllowWallJump
-                        && hitCollider.CompareTag("SprintWall"))
-                    {
-                        if (_previousWallJumpHitCollider == null || _previousWallJumpHitCollider.gameObject != hitCollider.gameObject)
-                        {
-                            _previousWallJumpHitCollider = hitCollider;
-                            _wallRunDirection = Vector3.zero;
-                        }
-                        _wallJumpNormal = hitNormal;
-                    }
-                    break;
+                    /*_wallJumpNormal = hitNormal;
+                    _canWallJump = true;*/
                 }
+
+                if (AllowWallJump
+                    && hitCollider.CompareTag("SprintWall"))
+                {
+                    if (_previousWallJumpHitCollider == null ||
+                        _previousWallJumpHitCollider.gameObject != hitCollider.gameObject)
+                    {
+                        _previousWallJumpHitCollider = hitCollider;
+                        _wallRunDirection = Vector3.zero;
+                    }
+
+                    _wallJumpNormal = hitNormal;
+                }
+
+                break;
+            }
         }
     }
 
@@ -1129,10 +1177,10 @@ public class PlayerCharacterController : MonoBehaviour, ICharacterController
         switch (CurrentCharacterState)
         {
             case CharacterState.Default:
-                {
-                    _internalVelocityAdd += velocity;
-                    break;
-                }
+            {
+                _internalVelocityAdd += velocity;
+                break;
+            }
         }
     }
 
@@ -1150,21 +1198,22 @@ public class PlayerCharacterController : MonoBehaviour, ICharacterController
         switch (CurrentCharacterState)
         {
             case CharacterState.Default:
+            {
+                if (AllowWallJump
+                    && hitCollider.CompareTag("SprintWall")
+                    //&& !Motor.GroundingStatus.IsStableOnGround 
+                   )
                 {
-                    if (AllowWallJump
-                        && hitCollider.CompareTag("SprintWall")
-                        //&& !Motor.GroundingStatus.IsStableOnGround 
-                        )
-                    {
-                        _canWallJump = true;
-                    }
-                    else
-                    {
-                        _previousWallJumpHitCollider = null;
-                        _canWallJump = false;
-                    }
-                    break;
+                    _canWallJump = true;
                 }
+                else
+                {
+                    _previousWallJumpHitCollider = null;
+                    _canWallJump = false;
+                }
+
+                break;
+            }
         }
     }
 
@@ -1175,7 +1224,8 @@ public class PlayerCharacterController : MonoBehaviour, ICharacterController
             if (FootstepAudioClips.Length > 0)
             {
                 var index = UnityEngine.Random.Range(0, FootstepAudioClips.Length);
-                AudioSource.PlayClipAtPoint(FootstepAudioClips[index], transform.TransformPoint(Motor.CharacterTransformToCapsuleCenter), FootstepAudioVolume);
+                AudioSource.PlayClipAtPoint(FootstepAudioClips[index],
+                    transform.TransformPoint(Motor.CharacterTransformToCapsuleCenter), FootstepAudioVolume);
             }
         }
     }
@@ -1184,9 +1234,8 @@ public class PlayerCharacterController : MonoBehaviour, ICharacterController
     {
         if (animationEvent.animatorClipInfo.weight > 0.5f)
         {
-            AudioSource.PlayClipAtPoint(LandingAudioClip, transform.TransformPoint(Motor.CharacterTransformToCapsuleCenter), FootstepAudioVolume);
+            AudioSource.PlayClipAtPoint(LandingAudioClip,
+                transform.TransformPoint(Motor.CharacterTransformToCapsuleCenter), FootstepAudioVolume);
         }
     }
-    
-    
 }

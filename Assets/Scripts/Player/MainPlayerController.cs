@@ -29,10 +29,10 @@ public class MainPlayerController : MonoBehaviour
 
     private void Update()
     {
-        /*if (Input.GetMouseButtonDown(0))
+        if (Input.GetMouseButtonDown(0))
         {
             Cursor.lockState = CursorLockMode.Locked;
-        }*/
+        }
 
         HandleCharacterInput();
     }
@@ -96,6 +96,7 @@ public class MainPlayerController : MonoBehaviour
         characterInputs.NoClipDown = InputManager.instance.NoClip;
         characterInputs.Sprint = InputManager.instance.Sprint;
         characterInputs.Attack = InputManager.instance.Fire;
+        characterInputs.Dance = InputManager.instance.Dance;
         
         Character.SetInputs(ref characterInputs);
     }
