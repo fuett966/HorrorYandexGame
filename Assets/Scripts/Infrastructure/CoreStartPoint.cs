@@ -2,11 +2,10 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using YG;
 
 public class CoreStartPoint : MonoSingleton<CoreStartPoint>
 {
-    public YandexGame YandexGame { get; private set; }
+    //public YandexGame YandexGame { get; private set; }
     public LevelLoader LevelLoader { get; private set; }
     
     
@@ -24,7 +23,7 @@ public class CoreStartPoint : MonoSingleton<CoreStartPoint>
         // Initializing LoadingManager
         LevelLoader = GetComponentInChildren<LevelLoader>();
         // Initializing Yandex
-        YandexGame = GetComponentInChildren<YandexGame>();
+        //YandexGame = GetComponentInChildren<YandexGame>();
         
         // Initializing Data
         // Initializing InputSystem

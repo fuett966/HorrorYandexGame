@@ -1,6 +1,5 @@
 using KinematicCharacterController;
 using UnityEngine;
-using YG;
 
 public class MainPlayerController : MonoBehaviour
 {
